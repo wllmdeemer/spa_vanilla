@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
+</head>
+<body>
+
+<div class="page">
+    <div class="container">
+        <div class="page__inner">
+            <main class="page__section page__section--main main-section">
+                <div class="main-section__item movies">
+                    <h1 class="movies__title title">Movies Gallery</h1>
+                    <div class="movies__list" data-template="movies-list"></div>
+                </div>
+            </main>
+            <aside class="page__section page__section--aside aside-section">
+                <div class="aside-section__item favorites">
+                    <p class="favorites__title title">Favorite List</p>
+                    <div class="favorites__list" data-template="favorites-list">
+
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+<div class="modal js-modal">
+    <div class="modal__background js-toggleModal"></div>
+    <div class="modal__wrap">
+        <div class="modal__content-outer">
+            <button class="btn-close btn-close--modal js-toggleModal"></button>
+            <div class="modal__content" data-template="single-movie"></div>
+        </div>
+    </div>
+</div>
+
+
+<script src="index.js"></script>
+
+<script data-template="movies-list-template" type="text/template">
+    {{#each api}}
+        <a href="#{{id}}" class="movies__item single-movie">
+            <div class="single-movie__img-outer">
+                <img src="{{img}}" alt="{{name}} movie" class="single-movie__img">
+            </div>
+            <p class="single-movie__name">{{name}}</p>
+            <p class="single-movie__year">{{year}}</p>
+            <button class="single-movie__to-favorites btn-star btn-star--in-list {{#favorite id}}btn-star--active{{/favorite}} js-toggleFavorites" data-movieid="{{id}}" data-moviename="{{name}}"></button>
+        </a>
+    {{/each}}
+</script>
+
+<script data-template="single-movie-template" type="text/template">
+    <div class="modal-movie">
+        <div class="modal-movie__row">
+            <div class="modal-movie__col modal-movie__col--left">
+                <div class="modal-movie__img-outer">
+                    <img src="{{api.img}}" alt="{{api.name}} movie" class="modal-movie__img">
+                </div>
+                <div class="modal-movie__info-row">
+                    <button class="modal-movie__to-favorites btn-star {{#favorite api.id}}btn-star--active{{/favorite}} js-toggleFavorites" data-movieid="{{api.id}}" data-moviename="{{api.name}}"></button>
+                    <p class="modal-movie__year">{{api.year}}</p>
+                </div>
+            </div>
+            <div class="modal-movie__col modal-movie__col--right">
+                <p class="modal-movie__name title">{{api.name}}</p>
+                <p class="modal-movie__description">{{api.description}}</p>
+            </div>
+        </div>
+        <div class="modal-movie__row">
+            <div class="modal-movie__col modal-movie__col--left">
+                <div class="modal-movie__genres-list">
+                    {{#each api.genres as |genre|}}
+                        <span class="modal-movie__single-genre">{{genre}}</span>
+                    {{/each}}
+                </div>
+            </div>
+            <div class="modal-movie__col modal-movie__col--right">
+                <p class="modal-movie__text-famous">
+                    <b>Director:</b> {{api.director}}
+                </p>
+                <p class="modal-movie__text-famous">
+                    <b>Starring:</b>
+                    {{#each api.starring as |actor|~}}
+                        {{#if @index}}, {{/if}}
+                        {{actor}}
+                    {{~/each}}
+                </p>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script data-template="favorites-list-template" type="text/template">
+    {{#each favorites}}
+        <div class="favorites__item">
+            <a href="#{{id}}" class="favorites__item-link">{{name}}</a>
+            <button class="favorites__item-remove btn-close js-toggleFavorites" data-movieid="{{id}}" data-moviename="{{name}}"></button>
+        </div>
+    {{/each}}
+</script>
+
+</body>
+</html>
