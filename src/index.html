@@ -22,9 +22,7 @@
             <aside class="page__section page__section--aside aside-section">
                 <div class="aside-section__item favorites">
                     <p class="favorites__title title">Favorite List</p>
-                    <div class="favorites__list" data-template="favorites-list">
-
-                    </div>
+                    <div class="favorites__list" data-template="favorites"></div>
                 </div>
             </aside>
         </div>
@@ -43,20 +41,20 @@
 
 <script src="index.js"></script>
 
-<script data-template="movies-list-template" type="text/template">
+<script data-template="movies-list-template" type="text/x-handlebars-template">
     {{#each api}}
-        <a href="#{{id}}" class="movies__item single-movie">
+        <a href="/#{{id}}" class="movies__item single-movie">
             <div class="single-movie__img-outer">
                 <img src="{{img}}" alt="{{name}} movie" class="single-movie__img">
             </div>
             <p class="single-movie__name">{{name}}</p>
             <p class="single-movie__year">{{year}}</p>
-            <button class="single-movie__to-favorites btn-star btn-star--in-list {{#favorite id}}btn-star--active{{/favorite}} js-toggleFavorites" data-movieid="{{id}}" data-moviename="{{name}}"></button>
+            <button class="single-movie__to-favorites btn-star btn-star--in-list {{#inFavorites id}}btn-star--active{{/inFavorites}} js-toggleFavorites" data-movieid="{{id}}" data-moviename="{{name}}"></button>
         </a>
     {{/each}}
 </script>
 
-<script data-template="single-movie-template" type="text/template">
+<script data-template="single-movie-template" type="text/x-handlebars-template">
     <div class="modal-movie">
         <div class="modal-movie__row">
             <div class="modal-movie__col modal-movie__col--left">
@@ -64,7 +62,7 @@
                     <img src="{{api.img}}" alt="{{api.name}} movie" class="modal-movie__img">
                 </div>
                 <div class="modal-movie__info-row">
-                    <button class="modal-movie__to-favorites btn-star {{#favorite api.id}}btn-star--active{{/favorite}} js-toggleFavorites" data-movieid="{{api.id}}" data-moviename="{{api.name}}"></button>
+                    <button class="modal-movie__to-favorites btn-star {{#inFavorites api.id}}btn-star--active{{/inFavorites}} js-toggleFavorites" data-movieid="{{api.id}}" data-moviename="{{api.name}}"></button>
                     <p class="modal-movie__year">{{api.year}}</p>
                 </div>
             </div>
@@ -97,7 +95,7 @@
     </div>
 </script>
 
-<script data-template="favorites-list-template" type="text/template">
+<script data-template="favorites-template" type="text/x-handlebars-template">
     {{#each favorites}}
         <div class="favorites__item">
             <a href="#{{id}}" class="favorites__item-link">{{name}}</a>

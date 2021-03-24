@@ -6,8 +6,8 @@ import "./styles.scss";
 import 'regenerator-runtime/runtime';
 
 // Helpers
-Handlebars.registerHelper('favorite', function (movieId, options) {
-    if (isFavorite(movieId)) {
+Handlebars.registerHelper('inFavorites', function (movieId, options) {
+    if (isInFavorites(movieId, 'favorites')) {
         return options.fn(this);
     } else {
         return options.inverse(this);
@@ -16,7 +16,8 @@ Handlebars.registerHelper('favorite', function (movieId, options) {
 
 const apiPath = 'https://my-json-server.typicode.com/moviedb-tech/movies/list';
 
-async function fetchData(url) {
+async function getApi(url, componentDataset) {
+    loader(componentDataset);
     const response = await fetch(url);
     if (!response.ok) {
         throw `${response.status}: ${response.statusText}`;
@@ -24,62 +25,95 @@ async function fetchData(url) {
     return await response.json();
 }
 
-function render(data, elemTemplate) {
-    elemTemplate = `${elemTemplate}-template`;
-    const elem = document.querySelector(`[data-template="${elemTemplate}"]`);
-    const elemLayout = elem.innerHTML;
-    const elemRender = Handlebars.compile(elemLayout);
-    return elemRender(data);
+function getLocalStorage(lcItemName) {
+    return JSON.parse(window.localStorage.getItem(lcItemName));
 }
 
+function setLocalStorage(lcItemName, data) {
+    return window.localStorage.setItem(lcItemName, JSON.stringify(data));
+}
+
+function loader(componentDataset) {
+    return document.querySelector(`[data-template="${componentDataset}"]`).innerHTML = 'Loading...';
+}
+
+function render(data, componentDataset) {
+    const componentTemplate = document.querySelector(`[data-template="${componentDataset}-template"]`).innerHTML;
+    const component = document.querySelector(`[data-template="${componentDataset}"]`);
+    const componentRenderFn = Handlebars.compile(componentTemplate);
+    component.innerHTML = componentRenderFn(data);
+}
+
+// Router
 function dispatch() {
     const singleMovieId = location.hash ? location.hash.slice(1) : "";
-    if (singleMovieId) {
-        handleData('single-movie', singleMovieId);
+    processSingleMovie(singleMovieId);
+}
+
+// Movies list
+function processMoviesList() {
+    const componentDataset = 'movies-list';
+    getApi(apiPath, componentDataset).then(data => {
+        render({
+            api: data,
+            favorites: getLocalStorage('favorites')
+        }, componentDataset);
+    });
+}
+
+// Single movie
+function processSingleMovie(singleMovieId) {
+    const componentDataset = 'single-movie';
+    toggleModal(singleMovieId);
+    if (!singleMovieId) {
+        window.location.hash = '';
+    } else {
+        getApi(`${apiPath}/${singleMovieId}`, componentDataset).then(data => {
+            render({
+                api: data,
+                favorites: getLocalStorage('favorites')
+            }, componentDataset);
+        });
     }
 }
 
-function clickListener(elemClass, callback) {
+function toggleModal(singleMovieId) {
+    const bodyClass = 'modal-opened';
+    const modalClass = 'modal--open';
+    if (singleMovieId) {
+        document.body.classList.add(bodyClass);
+        document.querySelector('.js-modal').classList.add(modalClass);
+    } else {
+        document.body.classList.remove(bodyClass);
+        document.querySelector('.js-modal').classList.remove(modalClass);
+    }
+}
+
+function singleMovieListener() {
     document.addEventListener('click',function(e){
-        if (e.target && e.target.classList.contains(elemClass)){
+        if (e.target && e.target.classList.contains('js-toggleModal')){
             e.preventDefault();
-            callback();
+            processSingleMovie();
         }
     });
 }
 
-// Handle data
-function handleData(elemTemplate, singleMovieId = '') {
-    const elem = document.querySelector(`[data-template="${elemTemplate}"]`);
-    elem.innerHTML = 'Loading...';
-    if (singleMovieId) toggleModal();
-    fetchData(`${apiPath}/${singleMovieId}`).then(data => {
-        elem.innerHTML = render({
-            api: data,
-            favorites: getFavorites()
-        }, elemTemplate);
-    });
-}
-
-function handleLocalStorage(elemTemplate) {
-    const elem = document.querySelector(`[data-template="${elemTemplate}"]`);
-    elem.innerHTML = render({
-            favorites: getFavorites()
-        }, elemTemplate);
-}
-
 // Favorites
-function getFavorites() {
-    let favoritesList = window.localStorage.getItem('favorites');
-    return JSON.parse(favoritesList);
-}
-
-function isFavorite(movieId) {
-    const inFavorites = getFavorites().find(movieInFavorites => +movieInFavorites.id === +movieId);
-    if (inFavorites) {
-        return inFavorites.id;
+function processFavorites(movieToFavorites) {
+    const componentDataset = 'favorites';
+    if (movieToFavorites) {
+        let favoritesList = getFavorites(componentDataset);
+        if (isInFavorites(movieToFavorites.id, componentDataset)) {
+            favoritesList = favoritesList.filter(movie => +movie.id !== +movieToFavorites.id)
+        } else {
+            favoritesList.push(movieToFavorites);
+        }
+        setLocalStorage(componentDataset, favoritesList);
+        toggleFavorites(movieToFavorites.id);
     }
-    return false;
+    render({
+        favorites: getLocalStorage(componentDataset)
+    }, componentDataset);
 }
 
 function toggleFavorites(movieId) {
@@ -89,65 +123,40 @@ function toggleFavorites(movieId) {
     });
 }
 
+function getFavorites(lcItemName) {
+    let favoritesList = getLocalStorage(lcItemName);
+    if (!favoritesList) {
+        favoritesList = [];
+        setLocalStorage(lcItemName, favoritesList);
+    }
+    return favoritesList;
+}
+
+function isInFavorites(movieToFavoritesId, lcItemName) {
+    return getFavorites(lcItemName).find(movie => +movie.id === +movieToFavoritesId);
+}
+
 function favoritesListener() {
     document.addEventListener('click',function(e){
         if (e.target && e.target.classList.contains('js-toggleFavorites')){
             e.preventDefault();
-            handleFavorites(e.target.dataset.movieid, e.target.dataset.moviename);
-            handleLocalStorage('favorites-list');
-        }
-    });
-}
-
-function handleFavorites(movieId, movieName) {
-    let favoritesList = getFavorites();
-    let inFavorite = isFavorite(movieId);
-    if (inFavorite) {
-        favoritesList = favoritesList.filter((movie) => +movie.id !== +inFavorite);
-    } else {
-        favoritesList.push({
-            id: movieId,
-            name: movieName
-        });
-    }
-    toggleFavorites(movieId);
-    window.localStorage.setItem('favorites', JSON.stringify(favoritesList));
-}
-
-// Modal
-function toggleModal() {
-    const modal = document.querySelector('.js-modal');
-    const openClass = 'modal--open';
-    if (modal.classList.contains(openClass)) {
-        modal.classList.remove(openClass);
-        window.location.hash = '';
-        document.body.style.overflow = '';
-    } else {
-        modal.classList.add(openClass);
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-function modalListener() {
-    document.addEventListener('click',function(e){
-        if (e.target && e.target.classList.contains('js-toggleModal')){
-            e.preventDefault();
-            toggleModal();
+            processFavorites({
+                id: e.target.dataset.movieid,
+                name: e.target.dataset.moviename
+            });
         }
     });
 }
 
 // Init function
-document.addEventListener("DOMContentLoaded", function () {
-    handleData('movies-list');
-    handleLocalStorage('favorites-list');
-
+window.addEventListener("DOMContentLoaded", function () {
     dispatch();
-    addEventListener("hashchange", dispatch);
+    window.addEventListener("hashchange", dispatch);
 
-    modalListener();
+    processMoviesList();
+
+    singleMovieListener();
+
+    processFavorites();
     favoritesListener();
 });
-
-
-
