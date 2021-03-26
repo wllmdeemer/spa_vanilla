@@ -16,7 +16,8 @@
             <main class="page__section page__section--main main-section">
                 <div class="main-section__item movies">
                     <h1 class="movies__title title">Movies Gallery</h1>
-                    <div class="movies__list" data-template="movies-list"></div>
+                    <div class="movies__controls" data-template="movies-controls"></div>
+                    <div class="movies__content" data-template="movies-list"></div>
                 </div>
             </main>
             <aside class="page__section page__section--aside aside-section">
@@ -29,7 +30,6 @@
     </div>
 </div>
 <div class="modal js-modal">
-    <div class="modal__background js-toggleModal"></div>
     <div class="modal__wrap">
         <div class="modal__content-outer">
             <button class="btn-close btn-close--modal js-toggleModal"></button>
@@ -41,17 +41,49 @@
 
 <script src="index.js"></script>
 
+<script data-template="movies-controls-template" type="text/x-handlebars-template">
+    <div class="movies__controls-item filter-genre">
+        <select class="filter-genre__select js-filterGenres">
+            <option class="filter-genre__option" value=""> -- select genre -- </option>
+            {{#each moviesGenres as |genre genreLower|}}
+                <option class="filter-genre__option" {{#if genre.isCurrent}}selected="selected"{{/if}} value="{{genreLower}}">{{genre.name}}</option>
+            {{/each}}
+        </select>
+    </div>
+    <div class="movies__controls-item filter-view">
+        <span class="filter-view__text">view as:</span>
+        <div class="filter-view__list">
+            <button class="filter-view__item filter-view__item--cards {{#isCurrentView 'cards'}}filter-view__item--active{{/isCurrentView}} js-filterView" data-view="cards"></button>
+            <button class="filter-view__item filter-view__item--rows {{#isCurrentView 'rows'}}filter-view__item--active{{/isCurrentView}} js-filterView" data-view="rows"></button>
+        </div>
+    </div>
+</script>
+
 <script data-template="movies-list-template" type="text/x-handlebars-template">
-    {{#each api}}
-        <a href="/#{{id}}" class="movies__item single-movie">
-            <div class="single-movie__img-outer">
-                <img src="{{img}}" alt="{{name}} movie" class="single-movie__img">
-            </div>
-            <p class="single-movie__name">{{name}}</p>
-            <p class="single-movie__year">{{year}}</p>
-            <button class="single-movie__to-favorites btn-star btn-star--in-list {{#inFavorites id}}btn-star--active{{/inFavorites}} js-toggleFavorites" data-movieid="{{id}}" data-moviename="{{name}}"></button>
-        </a>
-    {{/each}}
+    <div class="movies__list movies__list--movies-view--{{moviesView}}" >
+        {{#each api}}
+            <a href="#/movie/{{id}}" class="movies__item single-movie single-movie--movies-view--{{../moviesView}}">
+                <div class="single-movie__img-outer">
+                    <img src="{{img}}" alt="{{name}} movie" class="single-movie__img">
+                </div>
+                <div class="single-movie__info">
+                    <div class="single-movie__info-main">
+                        <p class="single-movie__name">{{name}}</p>
+                        <p class="single-movie__year">{{year}}</p>
+                    </div>
+                    <div class="single-movie__info-additional {{#isCurrentView 'rows'}}single-movie__info-additional--displayed{{/isCurrentView}}">
+                        <p class="single-movie__description">{{description}}</p>
+                        <div class="single-movie__genres">
+                            {{#each genres as |genre|}}
+                                <span class="single-movie__genre">{{genre}}</span>
+                            {{/each}}
+                        </div>
+                    </div>
+                    <button class="single-movie__to-favorites btn-star btn-star--in-list {{#inFavorites id}}btn-star--active{{/inFavorites}} js-toggleFavorites" data-movieid="{{id}}" data-moviename="{{name}}"></button>
+                </div>
+            </a>
+        {{/each}}
+    </div>
 </script>
 
 <script data-template="single-movie-template" type="text/x-handlebars-template">
@@ -98,7 +130,7 @@
 <script data-template="favorites-template" type="text/x-handlebars-template">
     {{#each favorites}}
         <div class="favorites__item">
-            <a href="#{{id}}" class="favorites__item-link">{{name}}</a>
+            <a href="#/movie/{{id}}" class="favorites__item-link">{{name}}</a>
             <button class="favorites__item-remove btn-close js-toggleFavorites" data-movieid="{{id}}" data-moviename="{{name}}"></button>
         </div>
     {{/each}}
